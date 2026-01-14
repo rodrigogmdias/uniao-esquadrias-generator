@@ -190,7 +190,7 @@ const App: React.FC = () => {
                </div>
                <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-blue-600" />
-                  <span>São Paulo, SP</span>
+                  <span>Minas Gerais</span>
                </div>
             </div>
           </div>
