@@ -90,7 +90,7 @@ const App: React.FC = () => {
              <div className="hidden sm:flex items-center gap-6">
                 <div className="w-px h-8 bg-gray-300"></div>
                 <div className="flex flex-col justify-center">
-                    <span className="text-sm font-bold text-gray-900 leading-none">Configurador Online</span>
+                    <span className="text-sm font-bold text-gray-900 leading-none">Orçamento Online</span>
                     <p className={`text-xs font-bold uppercase tracking-wider mt-1 ${currentConfig.productLine === 'Gold' ? 'text-yellow-600' : 'text-blue-600'}`}>
                         Linha {currentConfig.productLine}
                     </p>
