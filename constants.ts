@@ -84,9 +84,9 @@ export const GLASS_COLORS = {
 };
 
 export const MIN_WIDTH = 400;
-export const MAX_WIDTH = 3000;
+export const MAX_WIDTH = 6000; // Increased for large sliding doors
 export const MIN_HEIGHT = 400;
-export const MAX_HEIGHT = 2500;
+export const MAX_HEIGHT = 3000; // Increased for tall doors
 
 export const DEFAULT_CONFIG = {
   productLine: 'Suprema' as const,
@@ -110,8 +110,19 @@ export const calculatePrice = (config: { width: number, height: number, hasPersi
   // Base Price Logic
   let basePricePerM2 = config.productLine === 'Gold' ? 1200 : 800; // Gold is approx 50% more
   
+  const isDoor = config.type.toLowerCase().includes('porta');
+
+  // Doors generally have more robust profiles, adding to cost
+  if (isDoor) {
+    basePricePerM2 += config.productLine === 'Gold' ? 300 : 150;
+  }
+
   if (config.type === WindowType.MAXIM_AR) basePricePerM2 += 150;
-  if (config.type === WindowType.SLIDING_4_LEAF) basePricePerM2 += 300;
+  // 4 Leaf systems (Windows or Doors) are more complex
+  if (config.type.includes('4 Folhas')) basePricePerM2 += 300;
+  // Hinge doors have specific hardware costs
+  if (config.type === WindowType.DOOR_HINGE_1_LEAF) basePricePerM2 += 100;
+  if (config.type === WindowType.DOOR_HINGE_2_LEAF) basePricePerM2 += 180;
 
   let total = area * basePricePerM2;
 

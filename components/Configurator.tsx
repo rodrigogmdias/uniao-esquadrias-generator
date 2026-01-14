@@ -1,7 +1,7 @@
 import React from 'react';
 import { WindowConfig, WindowType } from '../types';
 import { MIN_WIDTH, MAX_WIDTH, MIN_HEIGHT, MAX_HEIGHT, PROFILE_FINISHES, GLASS_COLORS, FINISH_COLORS_MAP } from '../constants';
-import { Info, Crown, Layers } from 'lucide-react';
+import { Info, Crown, Layers, Grid2X2, RectangleVertical } from 'lucide-react';
 
 interface ConfiguratorProps {
   config: WindowConfig;
@@ -14,6 +14,21 @@ const Configurator: React.FC<ConfiguratorProps> = ({ config, onChange, onAddToCa
 
   const handleChange = (field: keyof WindowConfig, value: any) => {
     onChange({ ...config, [field]: value });
+  };
+
+  const currentCategory = config.type.includes('Janela') ? 'Janela' : 'Porta';
+
+  const switchCategory = (category: 'Janela' | 'Porta') => {
+    // Determine default type and height based on category
+    const newType = category === 'Janela' ? WindowType.SLIDING_2_LEAF : WindowType.DOOR_SLIDING_2_LEAF;
+    const newHeight = category === 'Janela' ? 1200 : 2100;
+
+    // Update both fields simultaneously to avoid race conditions
+    onChange({
+      ...config,
+      type: newType,
+      height: newHeight
+    });
   };
 
   return (
@@ -56,7 +71,50 @@ const Configurator: React.FC<ConfiguratorProps> = ({ config, onChange, onAddToCa
               </button>
            </div>
         </div>
+
+        {/* Category Tabs */}
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Produto</label>
+            <div className="bg-gray-100 p-1 rounded-lg grid grid-cols-2 gap-1">
+                <button
+                    onClick={() => switchCategory('Janela')}
+                    className={`flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-bold transition-all ${currentCategory === 'Janela' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Grid2X2 size={16} />
+                    <span>Janelas</span>
+                </button>
+                <button
+                    onClick={() => switchCategory('Porta')}
+                    className={`flex items-center justify-center space-x-2 py-2 rounded-md text-sm font-bold transition-all ${currentCategory === 'Porta' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <RectangleVertical size={16} />
+                    <span>Portas</span>
+                </button>
+            </div>
+        </div>
         
+        {/* Model Type - Filtered by Category */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
+          <div className="grid grid-cols-1 gap-2">
+            {Object.values(WindowType)
+                .filter(type => currentCategory === 'Janela' ? type.includes('Janela') : type.includes('Porta'))
+                .map((type) => (
+              <button
+                key={type}
+                onClick={() => handleChange('type', type)}
+                className={`p-3 rounded-lg border text-left transition-all ${
+                  config.type === type
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium ring-1 ring-blue-500'
+                    : 'border-gray-200 hover:bg-gray-50 text-gray-600'
+                }`}
+              >
+                {type.replace('Janela ', '').replace('Porta ', '')}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Dimensions */}
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -82,26 +140,6 @@ const Configurator: React.FC<ConfiguratorProps> = ({ config, onChange, onAddToCa
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 bg-white"
             />
             <span className="text-xs text-gray-500">Min: {MIN_HEIGHT} / Max: {MAX_HEIGHT}</span>
-          </div>
-        </div>
-
-        {/* Model Type */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
-          <div className="grid grid-cols-1 gap-2">
-            {Object.values(WindowType).map((type) => (
-              <button
-                key={type}
-                onClick={() => handleChange('type', type)}
-                className={`p-3 rounded-lg border text-left transition-all ${
-                  config.type === type
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium ring-1 ring-blue-500'
-                    : 'border-gray-200 hover:bg-gray-50 text-gray-600'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
           </div>
         </div>
 

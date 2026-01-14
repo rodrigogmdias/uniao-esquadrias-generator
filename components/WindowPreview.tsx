@@ -100,6 +100,88 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
   };
 
   const renderSashes = () => {
+    // --- Hinge Door (Giro 1 Leaf) ---
+    if (type === WindowType.DOOR_HINGE_1_LEAF) {
+       const sashWidth = width - (frameThick * 2);
+       const sashHeight = actualFrameHeight - (frameThick); // No frame at bottom usually, or thin threshold. Assuming frame for schema.
+
+       return (
+        <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
+             <rect
+                width={sashWidth}
+                height={sashHeight - frameThick} // Leave space for bottom profile
+                fill={glassColor}
+                stroke={colors.stroke}
+                strokeWidth="1"
+             />
+             {/* Sash Profile */}
+             <rect
+                width={sashWidth}
+                height={sashHeight - frameThick}
+                fill="none"
+                stroke={colors.fill}
+                strokeWidth={sashThick * 1.5} // Door sashes are wider
+             />
+             
+             {/* Handle - Mid right */}
+             <rect 
+                x={sashWidth - 80} 
+                y={(sashHeight/2) - 10} 
+                width={60} 
+                height={20} 
+                rx="4" 
+                fill={accFill} 
+                stroke={accStroke} 
+                strokeWidth="1" 
+             />
+
+             {/* Opening Arc (Dashed Triangle equivalent) */}
+             <path 
+                d={`M0,0 L${sashWidth},${sashHeight/2} L0,${sashHeight}`} 
+                fill="none" 
+                stroke="#999" 
+                strokeWidth="2" 
+                strokeDasharray="15,10"
+                opacity="0.7"
+             />
+        </g>
+       )
+    }
+
+    // --- Hinge Door (Giro 2 Leaf) ---
+    if (type === WindowType.DOOR_HINGE_2_LEAF) {
+       const totalSashWidth = width - (frameThick * 2);
+       const sashWidth = totalSashWidth / 2;
+       const sashHeight = actualFrameHeight - (frameThick);
+
+       // Render Left Sash
+       const leftSash = (
+           <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
+               <rect width={sashWidth} height={sashHeight - frameThick} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
+               <rect width={sashWidth} height={sashHeight - frameThick} fill="none" stroke={colors.fill} strokeWidth={sashThick * 1.5} />
+               {/* Handle Right side of left sash */}
+               <rect x={sashWidth - 50} y={(sashHeight/2) - 10} width={40} height={20} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
+               {/* Triangle */}
+               <path d={`M0,0 L${sashWidth},${sashHeight/2} L0,${sashHeight}`} fill="none" stroke="#999" strokeWidth="2" strokeDasharray="15,10" opacity="0.7" />
+           </g>
+       );
+
+       // Render Right Sash
+       const rightSash = (
+           <g transform={`translate(${drawX + frameThick + sashWidth}, ${frameY + frameThick})`}>
+               <rect width={sashWidth} height={sashHeight - frameThick} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
+               <rect width={sashWidth} height={sashHeight - frameThick} fill="none" stroke={colors.fill} strokeWidth={sashThick * 1.5} />
+               {/* Handle Left side of right sash */}
+               <rect x={10} y={(sashHeight/2) - 10} width={40} height={20} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
+               {/* Triangle (Mirrored) */}
+               <path d={`M${sashWidth},0 L0,${sashHeight/2} L${sashWidth},${sashHeight}`} fill="none" stroke="#999" strokeWidth="2" strokeDasharray="15,10" opacity="0.7" />
+           </g>
+       );
+
+       return <>{leftSash}{rightSash}</>;
+    }
+
+    // --- Maxim-Ar (Window only) ---
     if (type === WindowType.MAXIM_AR) {
       // Single pane that opens outwards (visualized as a simple frame with a handle/icon)
       const sashWidth = width - (frameThick * 2);
@@ -140,17 +222,21 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
       );
     }
 
-    if (type === WindowType.SLIDING_2_LEAF) {
+    // --- Sliding 2 Leaf (Windows AND Doors) ---
+    if (type === WindowType.SLIDING_2_LEAF || type === WindowType.DOOR_SLIDING_2_LEAF) {
       const overlap = 20;
       const leafWidth = (width - (frameThick * 2)) / 2 + overlap;
       const leafHeight = actualFrameHeight - (frameThick * 2);
+      
+      const isDoor = type === WindowType.DOOR_SLIDING_2_LEAF;
+      const localSashThick = isDoor ? sashThick * 1.3 : sashThick; // Doors have thicker sashes
 
       // Left Leaf (Back)
       const leftLeaf = (
         <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
           <rect width={leafWidth} height={leafHeight} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
            {/* Sash Frame */}
-           <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={sashThick} />
+           <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={localSashThick} />
            {/* Glass Glint */}
            <path d={`M${leafWidth * 0.2},${leafHeight * 0.2} L${leafWidth * 0.8},${leafHeight * 0.8}`} stroke="white" strokeWidth="2" opacity="0.3" />
            
@@ -167,7 +253,7 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
           
           <rect width={leafWidth} height={leafHeight} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
            {/* Sash Frame */}
-           <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={sashThick} />
+           <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={localSashThick} />
            {/* Lock Handle approximation */}
            <rect x={10} y={leafHeight/2 - 20} width={8} height={40} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
 
@@ -184,13 +270,16 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
       );
     }
 
-    if (type === WindowType.SLIDING_4_LEAF) {
-        // Simplified 4 leaf logic
+    // --- Sliding 4 Leaf (Windows AND Doors) ---
+    if (type === WindowType.SLIDING_4_LEAF || type === WindowType.DOOR_SLIDING_4_LEAF) {
         const overlap = 20;
         const totalInteriorWidth = width - (frameThick * 2);
         const leafWidth = (totalInteriorWidth / 4) + overlap;
         const leafHeight = actualFrameHeight - (frameThick * 2);
         
+        const isDoor = type === WindowType.DOOR_SLIDING_4_LEAF;
+        const localSashThick = isDoor ? sashThick * 1.3 : sashThick;
+
         // Just rendering 4 rectangles for simplicity
         return Array.from({length: 4}).map((_, i) => {
              const xPos = drawX + frameThick + (i * (leafWidth - overlap));
@@ -204,7 +293,7 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
              return (
                 <g key={i} transform={`translate(${xPos}, ${frameY + frameThick})`}>
                     <rect width={leafWidth} height={leafHeight} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
-                    <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={sashThick} />
+                    <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={localSashThick} />
                     {isCenter && (
                         <rect x={10} y={leafHeight/2 - 20} width={8} height={40} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
                     )}

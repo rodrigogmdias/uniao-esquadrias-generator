@@ -1,7 +1,14 @@
 export enum WindowType {
+  // Janelas
   SLIDING_2_LEAF = 'Janela de Correr (2 Folhas)',
   SLIDING_4_LEAF = 'Janela de Correr (4 Folhas)',
-  MAXIM_AR = 'Maxim-ar'
+  MAXIM_AR = 'Janela Maxim-ar',
+  
+  // Portas
+  DOOR_SLIDING_2_LEAF = 'Porta de Correr (2 Folhas)',
+  DOOR_SLIDING_4_LEAF = 'Porta de Correr (4 Folhas)',
+  DOOR_HINGE_1_LEAF = 'Porta de Giro (1 Folha)',
+  DOOR_HINGE_2_LEAF = 'Porta de Giro (2 Folhas)'
 }
 
 export type AccessoryColor = 'Preto' | 'Branco';
