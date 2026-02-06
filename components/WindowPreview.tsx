@@ -7,7 +7,7 @@ interface WindowPreviewProps {
 }
 
 const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
-  const { width, height, finish, accessoryColor, type, hasContramarco, hasPersiana, glassType, productLine } = config;
+  const { width, height, finish, accessoryColor, type, hasContramarco, hasVeneziana, hasPersiana, glassType, productLine } = config;
 
   // Fallback if finish is somehow not in map (though inputs are controlled)
   const colors = FINISH_COLORS_MAP[finish] || FINISH_COLORS_MAP["Branco Brilhante RAL9003"];
@@ -59,6 +59,29 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
     );
   };
 
+  // Helper to render Venetian Slats pattern
+  const renderSlats = (w: number, h: number) => {
+    // Simple horizontal lines
+    const slatCount = Math.floor(h / 30); // Slats every 30mm approx
+    
+    return (
+      <g>
+        {Array.from({ length: slatCount }).map((_, i) => (
+          <line 
+            key={i}
+            x1="0" 
+            y1={i * 30} 
+            x2={w} 
+            y2={i * 30} 
+            stroke={colors.stroke} 
+            strokeWidth="2"
+            opacity="0.6"
+          />
+        ))}
+      </g>
+    );
+  };
+
   // Dimension Arrows Helper
   const renderDimension = (val: number, isVertical: boolean) => {
     const textOffset = 40;
@@ -103,27 +126,48 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
     // --- Hinge Door (Giro 1 Leaf) ---
     if (type === WindowType.DOOR_HINGE_1_LEAF) {
        const sashWidth = width - (frameThick * 2);
-       const sashHeight = actualFrameHeight - (frameThick); // No frame at bottom usually, or thin threshold. Assuming frame for schema.
+       const sashHeight = actualFrameHeight - (frameThick); 
+       
+       // If veneziana, visualize as 50% open (split texture)
+       const venetianWidth = hasVeneziana ? sashWidth * 0.5 : 0;
 
        return (
         <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
+             {/* Base Glass Layer */}
              <rect
                 width={sashWidth}
-                height={sashHeight - frameThick} // Leave space for bottom profile
+                height={sashHeight - frameThick}
                 fill={glassColor}
                 stroke={colors.stroke}
                 strokeWidth="1"
              />
-             {/* Sash Profile */}
+             
+             {/* Venetian Layer (Partial if enabled) */}
+             {hasVeneziana && (
+               <g>
+                 <rect
+                    width={venetianWidth}
+                    height={sashHeight - frameThick}
+                    fill={colors.fill}
+                    stroke={colors.stroke}
+                    strokeWidth="1"
+                 />
+                 {renderSlats(venetianWidth, sashHeight - frameThick)}
+                 {/* Divider Line */}
+                 <line x1={venetianWidth} y1={0} x2={venetianWidth} y2={sashHeight - frameThick} stroke={colors.stroke} strokeWidth="2" />
+               </g>
+             )}
+
+             {/* Sash Profile Frame */}
              <rect
                 width={sashWidth}
                 height={sashHeight - frameThick}
                 fill="none"
                 stroke={colors.fill}
-                strokeWidth={sashThick * 1.5} // Door sashes are wider
+                strokeWidth={sashThick * 1.5}
              />
              
-             {/* Handle - Mid right */}
+             {/* Handle */}
              <rect 
                 x={sashWidth - 80} 
                 y={(sashHeight/2) - 10} 
@@ -135,7 +179,7 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
                 strokeWidth="1" 
              />
 
-             {/* Opening Arc (Dashed Triangle equivalent) */}
+             {/* Opening Arc */}
              <path 
                 d={`M0,0 L${sashWidth},${sashHeight/2} L0,${sashHeight}`} 
                 fill="none" 
@@ -154,14 +198,17 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
        const sashWidth = totalSashWidth / 2;
        const sashHeight = actualFrameHeight - (frameThick);
 
+       // If veneziana, Left is Glass, Right is Venetian
+       const leftIsVenetian = false;
+       const rightIsVenetian = hasVeneziana;
+
        // Render Left Sash
        const leftSash = (
            <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
-               <rect width={sashWidth} height={sashHeight - frameThick} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
+               <rect width={sashWidth} height={sashHeight - frameThick} fill={leftIsVenetian ? colors.fill : glassColor} stroke={colors.stroke} strokeWidth="1" />
+               {leftIsVenetian && renderSlats(sashWidth, sashHeight - frameThick)}
                <rect width={sashWidth} height={sashHeight - frameThick} fill="none" stroke={colors.fill} strokeWidth={sashThick * 1.5} />
-               {/* Handle Right side of left sash */}
                <rect x={sashWidth - 50} y={(sashHeight/2) - 10} width={40} height={20} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
-               {/* Triangle */}
                <path d={`M0,0 L${sashWidth},${sashHeight/2} L0,${sashHeight}`} fill="none" stroke="#999" strokeWidth="2" strokeDasharray="15,10" opacity="0.7" />
            </g>
        );
@@ -169,11 +216,10 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
        // Render Right Sash
        const rightSash = (
            <g transform={`translate(${drawX + frameThick + sashWidth}, ${frameY + frameThick})`}>
-               <rect width={sashWidth} height={sashHeight - frameThick} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
+               <rect width={sashWidth} height={sashHeight - frameThick} fill={rightIsVenetian ? colors.fill : glassColor} stroke={colors.stroke} strokeWidth="1" />
+               {rightIsVenetian && renderSlats(sashWidth, sashHeight - frameThick)}
                <rect width={sashWidth} height={sashHeight - frameThick} fill="none" stroke={colors.fill} strokeWidth={sashThick * 1.5} />
-               {/* Handle Left side of right sash */}
                <rect x={10} y={(sashHeight/2) - 10} width={40} height={20} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
-               {/* Triangle (Mirrored) */}
                <path d={`M${sashWidth},0 L0,${sashHeight/2} L${sashWidth},${sashHeight}`} fill="none" stroke="#999" strokeWidth="2" strokeDasharray="15,10" opacity="0.7" />
            </g>
        );
@@ -181,13 +227,17 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
        return <>{leftSash}{rightSash}</>;
     }
 
-    // --- Maxim-Ar (Window only) ---
+    // --- Maxim-Ar ---
     if (type === WindowType.MAXIM_AR) {
-      // Single pane that opens outwards (visualized as a simple frame with a handle/icon)
       const sashWidth = width - (frameThick * 2);
       const sashHeight = actualFrameHeight - (frameThick * 2);
+      
+      // Vertical split if Venetian: Top half Venetian, Bottom half Glass
+      const venetianHeight = hasVeneziana ? sashHeight * 0.5 : 0;
+
       return (
         <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
+          {/* Base Glass */}
           <rect
             width={sashWidth}
             height={sashHeight}
@@ -195,16 +245,24 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
             stroke={colors.stroke}
             strokeWidth="4"
           />
-           {/* Inner sash frame */}
+          
+          {/* Venetian Layer */}
+          {hasVeneziana && (
+            <g>
+                <rect width={sashWidth} height={venetianHeight} fill={colors.fill} stroke={colors.stroke} strokeWidth="1" />
+                {renderSlats(sashWidth, venetianHeight)}
+                <line x1={0} y1={venetianHeight} x2={sashWidth} y2={venetianHeight} stroke={colors.stroke} strokeWidth="2" />
+            </g>
+          )}
+
            <rect
             x={0} y={0}
             width={sashWidth}
             height={sashHeight}
             fill="none"
             stroke={colors.fill}
-            strokeWidth={sashThick} /* Sash profile width */
+            strokeWidth={sashThick}
           />
-           {/* Maxim-ar dashed lines indicating opening */}
            <polyline 
              points={`0,${sashHeight} ${sashWidth/2},0 ${sashWidth},${sashHeight}`} 
              fill="none" 
@@ -213,51 +271,44 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
              strokeDasharray="15,10"
              opacity="0.7"
            />
-           {/* Handle */}
            <circle cx={sashWidth/2} cy={sashHeight - 20} r="6" fill={accFill} stroke={accStroke} strokeWidth="1" />
-           
-           {/* Direction Arrow */}
            {renderArrow(sashWidth / 2, sashHeight / 2, 'down')}
         </g>
       );
     }
 
-    // --- Sliding 2 Leaf (Windows AND Doors) ---
+    // --- Sliding 2 Leaf ---
     if (type === WindowType.SLIDING_2_LEAF || type === WindowType.DOOR_SLIDING_2_LEAF) {
       const overlap = 20;
       const leafWidth = (width - (frameThick * 2)) / 2 + overlap;
       const leafHeight = actualFrameHeight - (frameThick * 2);
       
       const isDoor = type === WindowType.DOOR_SLIDING_2_LEAF;
-      const localSashThick = isDoor ? sashThick * 1.3 : sashThick; // Doors have thicker sashes
+      const localSashThick = isDoor ? sashThick * 1.3 : sashThick; 
+      
+      // Venetian Logic: Left Leaf is Glass, Right Leaf is Venetian
+      const leftIsVenetian = false; 
+      const rightIsVenetian = hasVeneziana;
 
-      // Left Leaf (Back)
+      // Left Leaf (Back) - Glass
       const leftLeaf = (
         <g transform={`translate(${drawX + frameThick}, ${frameY + frameThick})`}>
-          <rect width={leafWidth} height={leafHeight} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
-           {/* Sash Frame */}
+          <rect width={leafWidth} height={leafHeight} fill={leftIsVenetian ? colors.fill : glassColor} stroke={colors.stroke} strokeWidth="1" />
+           {leftIsVenetian && renderSlats(leafWidth, leafHeight)}
            <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={localSashThick} />
-           {/* Glass Glint */}
-           <path d={`M${leafWidth * 0.2},${leafHeight * 0.2} L${leafWidth * 0.8},${leafHeight * 0.8}`} stroke="white" strokeWidth="2" opacity="0.3" />
-           
-           {/* Direction Arrow (Slides Right to open) */}
+           {!leftIsVenetian && <path d={`M${leafWidth * 0.2},${leafHeight * 0.2} L${leafWidth * 0.8},${leafHeight * 0.8}`} stroke="white" strokeWidth="2" opacity="0.3" />}
            {renderArrow(leafWidth / 2, leafHeight / 2, 'right')}
         </g>
       );
 
-      // Right Leaf (Front)
+      // Right Leaf (Front) - Venetian (if enabled)
       const rightLeaf = (
         <g transform={`translate(${drawX + frameThick + leafWidth - (overlap * 2)}, ${frameY + frameThick})`}>
-          {/* Shadow for depth */}
           <rect x="-5" y="0" width={leafWidth} height={leafHeight} fill="black" opacity="0.1" />
-          
-          <rect width={leafWidth} height={leafHeight} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
-           {/* Sash Frame */}
+          <rect width={leafWidth} height={leafHeight} fill={rightIsVenetian ? colors.fill : glassColor} stroke={colors.stroke} strokeWidth="1" />
+           {rightIsVenetian && renderSlats(leafWidth, leafHeight)}
            <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={localSashThick} />
-           {/* Lock Handle approximation */}
            <rect x={10} y={leafHeight/2 - 20} width={8} height={40} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />
-
-           {/* Direction Arrow (Slides Left to open) */}
            {renderArrow(leafWidth / 2, leafHeight / 2, 'left')}
         </g>
       );
@@ -270,7 +321,7 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
       );
     }
 
-    // --- Sliding 4 Leaf (Windows AND Doors) ---
+    // --- Sliding 4 Leaf ---
     if (type === WindowType.SLIDING_4_LEAF || type === WindowType.DOOR_SLIDING_4_LEAF) {
         const overlap = 20;
         const totalInteriorWidth = width - (frameThick * 2);
@@ -280,19 +331,18 @@ const WindowPreview: React.FC<WindowPreviewProps> = ({ config }) => {
         const isDoor = type === WindowType.DOOR_SLIDING_4_LEAF;
         const localSashThick = isDoor ? sashThick * 1.3 : sashThick;
 
-        // Just rendering 4 rectangles for simplicity
         return Array.from({length: 4}).map((_, i) => {
              const xPos = drawX + frameThick + (i * (leafWidth - overlap));
              const isCenter = i === 1 || i === 2;
              
-             // Leaf 0: Fixed Left (no arrow)
-             // Leaf 1: Slides Left (Arrow Left)
-             // Leaf 2: Slides Right (Arrow Right)
-             // Leaf 3: Fixed Right (no arrow)
+             // Venetian Logic: Outer leaves (0, 3) are Venetian, Inner leaves (1, 2) are Glass
+             // This gives the "open in center" look
+             const isVenetianLeaf = hasVeneziana && (i === 0 || i === 3);
 
              return (
                 <g key={i} transform={`translate(${xPos}, ${frameY + frameThick})`}>
-                    <rect width={leafWidth} height={leafHeight} fill={glassColor} stroke={colors.stroke} strokeWidth="1" />
+                    <rect width={leafWidth} height={leafHeight} fill={isVenetianLeaf ? colors.fill : glassColor} stroke={colors.stroke} strokeWidth="1" />
+                    {isVenetianLeaf && renderSlats(leafWidth, leafHeight)}
                     <rect width={leafWidth} height={leafHeight} fill="none" stroke={colors.fill} strokeWidth={localSashThick} />
                     {isCenter && (
                         <rect x={10} y={leafHeight/2 - 20} width={8} height={40} rx="4" fill={accFill} stroke={accStroke} strokeWidth="1" />

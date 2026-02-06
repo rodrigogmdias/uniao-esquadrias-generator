@@ -45,6 +45,10 @@ const App: React.FC = () => {
       message += `- Vidro: ${item.glassType}\n`;
       message += `- Acessórios: ${item.accessoryColor}\n`;
       
+      if (item.hasVeneziana) {
+        message += `- Tipo: *Com Veneziana*\n`;
+      }
+
       if (item.hasPersiana) {
          message += `- Persiana: Sim (${item.persianaControl})\n`;
       } else {
@@ -250,6 +254,11 @@ const App: React.FC = () => {
                             <span className="font-medium">{item.accessoryColor}</span>
                          </div>
                          <div className="flex gap-2 flex-wrap mt-2 pt-2 border-t border-gray-100">
+                            {item.hasVeneziana && (
+                              <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded border border-green-200">
+                                Com Veneziana
+                              </span>
+                            )}
                             {item.hasPersiana && (
                               <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded border border-blue-200">
                                 Persiana {item.persianaControl}

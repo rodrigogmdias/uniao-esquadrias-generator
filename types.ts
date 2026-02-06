@@ -25,6 +25,7 @@ export interface WindowConfig {
   type: WindowType;
   hasContramarco: boolean;
   gap: number; // folga in mm
+  hasVeneziana: boolean; // New attribute
   hasPersiana: boolean;
   persianaControl: PersianaControl;
   glassType: 'Incolor' | 'Verde' | 'Fumê';

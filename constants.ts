@@ -97,6 +97,7 @@ export const DEFAULT_CONFIG = {
   type: WindowType.SLIDING_2_LEAF,
   hasContramarco: false,
   gap: 5,
+  hasVeneziana: false,
   hasPersiana: false,
   persianaControl: "Manual" as const,
   glassType: 'Incolor' as const,
@@ -104,7 +105,7 @@ export const DEFAULT_CONFIG = {
 };
 
 // Simplified pricing logic for estimation
-export const calculatePrice = (config: { width: number, height: number, hasPersiana: boolean, persianaControl?: string, hasContramarco: boolean, type: WindowType, productLine: string }) => {
+export const calculatePrice = (config: { width: number, height: number, hasVeneziana: boolean, hasPersiana: boolean, persianaControl?: string, hasContramarco: boolean, type: WindowType, productLine: string }) => {
   const area = (config.width * config.height) / 1000000; // m2
   
   // Base Price Logic
@@ -125,6 +126,12 @@ export const calculatePrice = (config: { width: number, height: number, hasPersi
   if (config.type === WindowType.DOOR_HINGE_2_LEAF) basePricePerM2 += 180;
 
   let total = area * basePricePerM2;
+
+  // Veneziana Logic (Cost of extra profiles/slats)
+  if (config.hasVeneziana) {
+      const venezianaCost = config.productLine === 'Gold' ? 500 : 350; // Extra per m2
+      total += (area * venezianaCost);
+  }
 
   // Persiana Logic
   if (config.hasPersiana) {
