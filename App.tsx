@@ -69,7 +69,7 @@ const App: React.FC = () => {
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     
     if (typeof window.gtag_report_conversion === 'function') {
-      window.gtag_report_conversion(url);
+      window.gtag_report_conversion(url, cartTotal);
     } else {
       window.open(url, '_blank');
     }
