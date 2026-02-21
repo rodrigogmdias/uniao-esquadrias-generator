@@ -68,7 +68,11 @@ const App: React.FC = () => {
     const phoneNumber = "553123420005";
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     
-    window.open(url, '_blank');
+    if (typeof window.gtag_report_conversion === 'function') {
+      window.gtag_report_conversion(url);
+    } else {
+      window.open(url, '_blank');
+    }
 
     setIsCartOpen(false);
     setShowOrderSuccess(true);
