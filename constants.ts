@@ -104,8 +104,7 @@ export const DEFAULT_CONFIG = {
   quantity: 1
 };
 
-// Simplified pricing logic for estimation
-export const calculatePrice = (config: { width: number, height: number, hasVeneziana: boolean, hasPersiana: boolean, persianaControl?: string, hasContramarco: boolean, type: WindowType, productLine: string }) => {
+export const calculateBasePrice = (config: { width: number, height: number, hasVeneziana: boolean, hasPersiana: boolean, persianaControl?: string, hasContramarco: boolean, type: WindowType, productLine: string }) => {
   const area = (config.width * config.height) / 1000000; // m2
   
   // Base Price Logic
@@ -153,5 +152,55 @@ export const calculatePrice = (config: { width: number, height: number, hasVenez
     total += perimeter * contramarcoCost; 
   }
 
-  return Math.round(total);
+  return total;
+};
+
+export const checkPenalty = (config: WindowConfig, cart: WindowConfig[] = []) => {
+  const itemMeters = ((config.width + config.height) * 2) / 1000;
+  
+  const otherItems = cart.filter(item => 
+    item.id !== config.id && 
+    item.productLine === config.productLine && 
+    item.finish === config.finish
+  );
+  
+  const otherMeters = otherItems.reduce((acc, item) => 
+    acc + (((item.width + item.height) * 2) / 1000), 0
+  );
+  
+  const totalMeters = otherMeters + itemMeters;
+  
+  return totalMeters < 9;
+};
+
+export const calculatePrice = (config: WindowConfig, cart: WindowConfig[] = []) => {
+  const basePrice = calculateBasePrice(config);
+  
+  // Estimate linear meters of aluminum used (using perimeter as proxy)
+  const itemMeters = ((config.width + config.height) * 2) / 1000;
+  
+  // Find other items in the cart with the same material
+  const otherItems = cart.filter(item => 
+    item.id !== config.id && 
+    item.productLine === config.productLine && 
+    item.finish === config.finish
+  );
+  
+  const otherMeters = otherItems.reduce((acc, item) => 
+    acc + (((item.width + item.height) * 2) / 1000), 0
+  );
+  
+  const totalMeters = otherMeters + itemMeters;
+  
+  let penalty = 0;
+  // Minimum 9 meters per material rule
+  if (totalMeters < 9) {
+    const penaltyCostPerMeter = config.productLine === 'Gold' ? 150 : 100;
+    const totalPenalty = (9 - totalMeters) * penaltyCostPerMeter;
+    
+    // Distribute penalty proportionally to the meters used by this item
+    penalty = totalPenalty * (itemMeters / totalMeters);
+  }
+  
+  return Math.round(basePrice + penalty);
 };

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { WindowConfig, CartItem } from './types';
-import { DEFAULT_CONFIG, calculatePrice } from './constants';
+import { DEFAULT_CONFIG, calculatePrice, checkPenalty } from './constants';
 import WindowPreview from './components/WindowPreview';
 import Configurator from './components/Configurator';
 import { ShoppingCart, X, Trash2, Phone, Mail, MapPin } from 'lucide-react';
@@ -15,14 +15,24 @@ const App: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
 
-  const currentPrice = useMemo(() => calculatePrice(currentConfig), [currentConfig]);
-  const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + item.price, 0), [cart]);
+  const currentPrice = useMemo(() => calculatePrice(currentConfig, cart), [currentConfig, cart]);
+  const hasPenalty = useMemo(() => checkPenalty(currentConfig, cart), [currentConfig, cart]);
+  
+  // Recalculate cart items prices based on the current cart contents
+  const cartWithUpdatedPrices = useMemo(() => {
+    return cart.map(item => ({
+      ...item,
+      price: calculatePrice(item, cart)
+    }));
+  }, [cart]);
+
+  const cartTotal = useMemo(() => cartWithUpdatedPrices.reduce((acc, item) => acc + item.price, 0), [cartWithUpdatedPrices]);
 
   const handleAddToCart = () => {
     const newItem: CartItem = {
       ...currentConfig,
       id: Date.now().toString(),
-      price: currentPrice
+      price: 0 // Will be calculated dynamically
     };
     setCart([...cart, newItem]);
     setIsCartOpen(true);
@@ -36,7 +46,7 @@ const App: React.FC = () => {
     // Construct WhatsApp Message
     let message = "📋 *NOVO PEDIDO - UNIÃO ESQUADRIAS*\n\n";
     
-    cart.forEach((item, index) => {
+    cartWithUpdatedPrices.forEach((item, index) => {
       message += `*Esquadria ${index + 1}:*\n`;
       message += `- Linha: ${item.productLine}\n`;
       message += `- Modelo: ${item.type}\n`;
@@ -173,6 +183,7 @@ const App: React.FC = () => {
               onChange={setCurrentConfig}
               onAddToCart={handleAddToCart}
               price={currentPrice}
+              hasPenalty={hasPenalty}
             />
           </div>
         </div>
@@ -228,14 +239,14 @@ const App: React.FC = () => {
 
                {/* Cart Items */}
                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
-                 {cart.length === 0 ? (
+                 {cartWithUpdatedPrices.length === 0 ? (
                    <div className="h-full flex flex-col items-center justify-center text-gray-400">
                      <ShoppingCart className="w-16 h-16 mb-4 opacity-20" />
                      <p className="font-medium">Seu carrinho está vazio.</p>
                      <p className="text-sm">Adicione esquadrias para começar.</p>
                    </div>
                  ) : (
-                   cart.map((item) => (
+                   cartWithUpdatedPrices.map((item) => (
                      <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow">
                        <div className="flex justify-between items-start mb-2">
                           <div className="flex flex-col">

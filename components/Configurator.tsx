@@ -8,9 +8,10 @@ interface ConfiguratorProps {
   onChange: (newConfig: WindowConfig) => void;
   onAddToCart: () => void;
   price: number;
+  hasPenalty?: boolean;
 }
 
-const Configurator: React.FC<ConfiguratorProps> = ({ config, onChange, onAddToCart, price }) => {
+const Configurator: React.FC<ConfiguratorProps> = ({ config, onChange, onAddToCart, price, hasPenalty }) => {
 
   const handleChange = (field: keyof WindowConfig, value: any) => {
     let newConfig = { ...config, [field]: value };
@@ -335,6 +336,14 @@ const Configurator: React.FC<ConfiguratorProps> = ({ config, onChange, onAddToCa
 
       {/* Footer Price & Action */}
       <div className="mt-6 pt-4 border-t border-gray-100">
+        {hasPenalty && (
+          <div className="mb-4 bg-gray-50 border border-gray-100 text-gray-500 p-3 rounded-lg text-xs flex items-start gap-2">
+            <Info size={14} className="mt-0.5 flex-shrink-0 text-blue-500" />
+            <p>
+              <strong>Dica de otimização:</strong> O alumínio é processado em barras de 9m. Adicione mais itens com a mesma linha e acabamento ao carrinho para diluir os custos de material e obter um valor final mais vantajoso.
+            </p>
+          </div>
+        )}
         <div className="flex justify-between items-end mb-4">
             <span className="text-gray-500 text-sm">Valor estimado</span>
             <span className="text-3xl font-bold text-gray-900">R$ {price.toLocaleString('pt-BR')}</span>
